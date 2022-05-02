@@ -2,7 +2,6 @@ const Card = require('../models/card');
 
 exports.getCards = async (req, res) => {
   Card.find({})
-    .populate('cards')
     .then((cards) => { res.send({ data: cards }); })
     .catch(() => res.status(500).send({ message: 'ошибка' }));
 };
