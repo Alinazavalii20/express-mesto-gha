@@ -5,7 +5,7 @@ const userRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
 
 const app = express();
-const { PORT = 3001 } = process.env;
+const { PORT = 3000 } = process.env;
 app.use(express.json());
 
 app.use((req, res, next) => {
