@@ -1,13 +1,13 @@
-const User = require('../models/user')
+const User = require('../models/user');
 
 module.exports.getUsers = async (req, res) => {
   User.find({})
-    .then(users => res.send(users))
+    .then((users) => res.send(users))
     .catch(() => res.status(500).send({ message: 'ошибка' }));
-};;
+};
 
 module.exports.getUser = async (req, res) => {
-  const userId = req.params.userId;
+  const { userId } = req.params;
 
   User.findById(userId)
     .then((user) => {
@@ -25,7 +25,6 @@ module.exports.getUser = async (req, res) => {
       }
     });
 };
-
 
 module.exports.creatUser = async (req, res) => {
   const { name, about, avatar } = req.body;

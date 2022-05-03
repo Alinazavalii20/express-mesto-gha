@@ -5,7 +5,8 @@ const {
   getUser,
   creatUser,
   patchUser,
-  patchUsersAvatar } = require('../controllers/users');
+  patchUsersAvatar,
+} = require('../controllers/users');
 
 const userRouter = express.Router();
 
