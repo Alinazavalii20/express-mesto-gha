@@ -10,14 +10,14 @@ app.use(express.json());
 
 app.use((req, res, next) => {
   req.user = {
-    _id: '62198f7d3c1ef718b915a9db',
+    _id: '62711ea1a9b96071d9da3a18',
   };
 
   next();
 });
 
 async function main() {
-  await mongoose.connect('mongodb://localhost:27017/mydb', {
+  await mongoose.connect('mongodb://localhost:27017/mestodb', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
