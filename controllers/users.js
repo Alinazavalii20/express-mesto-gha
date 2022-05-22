@@ -1,41 +1,39 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
+const ConflictError = require('../errors/ConflictError');
+const UnAuthtorizeError = require('../errors/UnAuthtorizeError');
 
-const {
-  BadRequestError,
-  UnAuthtorizeError,
-  NotFoundError,
-  ServerError,
-} = require('../utils/utils');
+const DUPLICATE_MONGOOSE_ERROR = 11000;
 
-module.exports.getUsers = async (req, res) => {
+module.exports.getUsers = async (req, res, next) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch(() => res.status(ServerError).send({ message: 'ошибка' }));
+    .catch(next);
 };
 
-module.exports.getUser = async (req, res) => {
+module.exports.getUser = async (req, res, next) => {
   const { userId } = req.params;
 
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        res.status(NotFoundError).send({ message: 'Пользователь не найден' });
-      } else {
-        res.send({ data: user });
+        throw new NotFoundError({ message: 'Пользователь не найден' });
       }
+      res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BadRequestError).send({ message: 'Невалидный id пользователя' });
-      } else {
-        res.status(ServerError).send({ message: 'ошибка' });
+        next(new BadRequestError({ message: 'Невалидный id пользователя' }));
+        return;
       }
+      next(err);
     });
 };
 
-module.exports.creatUser = async (req, res) => {
+module.exports.creatUser = async (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
@@ -44,22 +42,23 @@ module.exports.creatUser = async (req, res) => {
     .then((hash) => User.create({
       name, about, avatar, email, password: hash,
     }))
-    .then((user) => res.send(user))
+    .then(() => res.status(200).send({
+      name, about, avatar, email,
+    }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(BadRequestError).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(UnAuthtorizeError).send({ message: 'Передан неверный логин или пароль.' });
+      if (err.name === DUPLICATE_MONGOOSE_ERROR) {
+        throw new ConflictError({ message: 'Данный email уже зарегестрирован.' });
+      } else if (err.name === 'ValidationError') {
+        throw new BadRequestError({ message: 'Передан неверный логин или пароль.' });
       }
-    });
+      next();
+    })
+    .catch(next);
 };
 
-module.exports.patchUser = async (req, res) => {
+module.exports.patchUser = async (req, res, next) => {
   const { name, about } = req.body;
-  if (!name || !about) {
-    return res.status(BadRequestError).send({ message: 'Поля должны быть заполнены' });
-  }
-  return User.findByIdAndUpdate(
+  User.findByIdAndUpdate(
     req.user._id,
     { name, about },
     {
@@ -68,28 +67,22 @@ module.exports.patchUser = async (req, res) => {
       upsert: false,
     },
   )
-    .then((user) => {
-      if (!user) {
-        res.status(NotFoundError).send({ message: 'Пользователь с указанным id не найден' });
-      } else {
-        res.send({ data: user });
-      }
-    })
+    .then((user) => res.send({ data: user }))
+    // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BadRequestError).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(ServerError).send({ message: 'ошибка' });
+        return next(BadRequestError({ message: 'Переданы некорректные данные' }));
       }
+      if (err.name === 'CastError') {
+        return next(new BadRequestError({ message: 'Передан некорретный Id' }));
+      }
+      next(err);
     });
 };
 
-module.exports.patchUsersAvatar = async (req, res) => {
+module.exports.patchUsersAvatar = async (req, res, next) => {
   const { avatar } = req.body;
-  if (!avatar) {
-    return res.status(BadRequestError).send({ message: 'Поле должно быть заполнено' });
-  }
-  return User.findByIdAndUpdate(
+  User.findByIdAndUpdate(
     req.user._id,
     { avatar },
     {
@@ -98,32 +91,25 @@ module.exports.patchUsersAvatar = async (req, res) => {
       upsert: false,
     },
   )
-    .then((user) => {
-      if (!user) {
-        res.status(NotFoundError).send({ message: 'Пользователь с указанным id не найден' });
-      } else {
-        res.send({ data: user });
-      }
-    })
+    .then((user) => res.send({ data: user }))
+    // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BadRequestError).send({ message: 'Переданы некорректные данные' });
-      } else {
-        res.status(ServerError).send({ message: 'ошибка' });
+        return next(new BadRequestError({ message: 'Введены некорретные данные' }));
       }
+
+      if (err.name === 'CastError') {
+        return next(new BadRequestError({ message: 'Передан некорретный Id' }));
+      }
+
+      next(err);
     });
 };
 
-module.exports.login = async (req, res) => {
+module.exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  User.findOne({ email })
-    .then((user) => {
-      if (!user) {
-        res.status(BadRequestError).send({ message: 'Переданы некорректные данные' });
-      }
-      return bcrypt.compare(password, user.password);
-    })
+  return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },
@@ -134,6 +120,6 @@ module.exports.login = async (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      res.status(UnAuthtorizeError).send({ message: err.message });
+      next(new UnAuthtorizeError({ message: err.message }));
     });
 };
