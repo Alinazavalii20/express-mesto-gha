@@ -17,7 +17,7 @@ exports.postCards = async (req, res, next) => {
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError({ message: 'Переданы некорректные данные' }));
+        return next(new BadRequestError('Переданы некорректные данные'));
       }
       next(err);
     });
@@ -28,14 +28,14 @@ exports.deleteCard = async (req, res, next) => {
 
   Card.findById(cardID)
     .orFail(() => {
-      throw new NotFoundError({ message: 'Карточка не найдена' });
+      throw new NotFoundError('Карточка не найдена');
     })
     .then((card) => {
       if (!card.owner.equals(req.user._id)) {
-        return next(new ForbiddenError({ message: 'Нельзя удалить чужую карточку' }));
+        return next(new ForbiddenError('Нельзя удалить чужую карточку'));
       }
       return card.remove()
-        .then(() => res.send({ message: 'Карточка удалена' }));
+        .then(() => res.send('Карточка удалена'));
     })
     .catch(next);
 };
@@ -48,14 +48,14 @@ exports.putCardLike = async (req, res, next) => {
   )
     .then((like) => {
       if (!like) {
-        throw new NotFoundError({ message: 'Передан неправильный id карточки' });
+        throw new NotFoundError('Передан неправильный id карточки');
       }
       res.send({ data: like });
     })
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequestError({ message: 'Переданы некорректные данные' }));
+        return next(new BadRequestError('Переданы некорректные данные'));
       }
       next(err);
     });
@@ -69,14 +69,14 @@ exports.deleteCardLike = async (req, res, next) => {
   )
     .then((like) => {
       if (!like) {
-        throw new NotFoundError({ message: 'Передан неправильный id карточки' });
+        throw new NotFoundError('Передан неправильный id карточки');
       }
       res.send({ data: like });
     })
     // eslint-disable-next-line consistent-return
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequestError({ message: 'Переданы некорректные данные' }));
+        return next(new BadRequestError('Переданы некорректные данные'));
       }
       next(err);
     });

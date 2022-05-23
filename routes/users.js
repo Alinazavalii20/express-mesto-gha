@@ -4,6 +4,7 @@ const { celebrate, Joi } = require('celebrate');
 const {
   getUsers,
   getUser,
+  getUserID,
   creatUser,
   patchUser,
   patchUsersAvatar,
@@ -13,16 +14,22 @@ const userRouter = express.Router();
 
 userRouter.get('/', getUsers);
 
+userRouter.get('/users/me', getUser);
+
 userRouter.get('/:userId', celebrate({
+  params: Joi.object().keys({
+    id: Joi.string().length(24).hex().required(),
+  }),
+}), getUserID);
+
+userRouter.post('/', creatUser);
+
+userRouter.patch('/me', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
   }),
-}), getUser);
-
-userRouter.post('/', creatUser);
-
-userRouter.patch('/me', patchUser);
+}), patchUser);
 
 userRouter.patch('/me/avatar', celebrate({
   body: Joi.object().keys({

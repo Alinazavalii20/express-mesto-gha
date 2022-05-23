@@ -41,12 +41,12 @@ app.post('/signup', celebrate({
 app.use('/users', auth, userRouter);
 app.use('/cards', auth, cardsRouter);
 
-app.use(errors());
-app.use(errorHandler);
-
-app.use((req, res, next) => {
+app.use('/', auth, (req, res, next) => {
   next(new NotFoundError('Страница по указанному адресу не найдена'));
 });
+
+app.use(errors());
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`server listening on port ${PORT}`);
