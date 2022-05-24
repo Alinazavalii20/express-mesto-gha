@@ -24,9 +24,9 @@ exports.postCards = async (req, res, next) => {
 };
 
 exports.deleteCard = async (req, res, next) => {
-  const { cardID } = req.params;
+  const { cardId } = req.params;
 
-  Card.findById(cardID)
+  Card.findById(cardId)
     .orFail(() => {
       throw new NotFoundError('Карточка не найдена');
     })
@@ -35,7 +35,7 @@ exports.deleteCard = async (req, res, next) => {
         return next(new ForbiddenError('Нельзя удалить чужую карточку'));
       }
       return card.remove()
-        .then(() => res.send('Карточка удалена'));
+        .then(() => res.send({ message: 'Карточка удалена' }));
     })
     .catch(next);
 };

@@ -14,11 +14,11 @@ const userRouter = express.Router();
 
 userRouter.get('/', getUsers);
 
-userRouter.get('/users/me', getUser);
+userRouter.get('/me', getUser);
 
 userRouter.get('/:userId', celebrate({
   params: Joi.object().keys({
-    id: Joi.string().length(24).hex().required(),
+    userId: Joi.string().length(24).hex().required(),
   }),
 }), getUserID);
 

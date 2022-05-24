@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { UnAuthtorizeError } = require('../errors/UnAuthtorizeError');
 
 module.exports = (req, res, next) => {
-  const authorization = res.cookies.jwt;
+  const authorization = req.cookies.jwt;
 
   if (!authorization) {
     next(new UnAuthtorizeError('Необходима авторизация'));
