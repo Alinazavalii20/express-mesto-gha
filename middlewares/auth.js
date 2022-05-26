@@ -7,16 +7,14 @@ module.exports = (req, res, next) => {
   if (!authorization) {
     next(new UnAuthtorizeError('Необходима авторизация'));
   } else {
-    let payload;
     const token = authorization;
+    let payload;
     try {
       payload = jwt.verify(token, 'super-secret-key');
     } catch (err) {
-      next(new UnAuthtorizeError('Необходима авторизация'));
+      return next(new UnAuthtorizeError('Необходима авторизация'));
     }
     req.user = payload;
     next();
-    // eslint-disable-next-line no-useless-return
-    return;
   }
 };
