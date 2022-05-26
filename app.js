@@ -13,8 +13,9 @@ const { login } = require('./controllers/users');
 const { creatUser } = require('./controllers/users');
 
 const app = express();
-app.use(cookieParser());
 const { PORT = 3000 } = process.env;
+
+app.use(cookieParser());
 app.use(express.json());
 
 mongoose.connect('mongodb://localhost:27017/mestodb', () => {
